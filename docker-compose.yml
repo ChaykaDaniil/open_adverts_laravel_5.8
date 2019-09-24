@@ -1,0 +1,95 @@
+version: '3'
+services:
+  #NGINX
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: nginx
+    networks:
+      - network-app
+    tty: true
+    restart: unless-stopped
+    working_dir: /var/www
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www
+  #NGINX END
+
+  #PHP-FPM
+  app:
+      build:
+        context: .
+        dockerfile: docker/php/Dockerfile
+      environment:
+        XDEBUG_CONFIG: "remote_host=192.168.220.1 remote_enable=1"
+        PHP_IDE_CONFIG: "serverName=Docker"
+      container_name: app
+      networks:
+        - network-app
+      tty: true
+      restart: unless-stopped
+      working_dir: /var/www
+      volumes:
+        - ./:/var/www
+  #PHP-FPM END
+
+  #PHP-CLI
+#  php-cli:
+#      build:
+#        context: .
+#        dockerfile: docker/php-cli/Dockerfile
+#      container_name: php-cli
+#      networks:
+#        - network-app
+#      tty: true
+#      restart: unless-stopped
+#      working_dir: /var/www
+#      volumes:
+#        - ./:/var/www
+  #PHP-CLI END
+
+  #MYSQL
+  db:
+    image: mysql:5.7
+    container_name: db
+    networks:
+      - network-app
+    tty: true
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=laravel
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    ports:
+      - "33061:3306"
+    volumes:
+      - ./storage/docker/mysql:/var/lib/mysql
+  #MYSQL END
+
+  #REDIS
+
+  #REDIS END
+
+  #NODEJS
+  node:
+    container_name: node
+    build:
+      context: ./
+      dockerfile: docker/nodejs/Dockerfile
+    volumes:
+      - ./:/var/www
+    restart: unless-stopped
+    tty: true
+  #NODEJS END
+
+#Networks
+networks:
+  network-app:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.220.0/28
